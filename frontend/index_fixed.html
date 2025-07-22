@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統合検索システム - Chatwork & Notion</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .search-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .search-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .filter-label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .stats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .results {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .result-item {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+        
+        .result-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .platform-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .platform-chatwork {
+            background: #ff6b35;
+            color: white;
+        }
+        
+        .platform-notion {
+            background: #000000;
+            color: white;
+        }
+        
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .result-content {
+            margin: 15px 0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .result-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .result-link:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                min-width: unset;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 統合検索システム</h1>
+        <p>Chatwork & Notion を横断検索</p>
+    </div>
+
+    <div class="search-container">
+        <div class="search-form">
+            <input type="text" id="searchInput" class="search-input" placeholder="検索キーワードを入力..." />
+            <button onclick="performSearch()" class="search-btn">検索</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">プラットフォーム:</label>
+                <select id="platformFilter" class="filter-select">
+                    <option value="">全て</option>
+                    <option value="chatwork">💬 Chatwork</option>
+                    <option value="notion">📄 Notion</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">件数:</label>
+                <select id="limitFilter" class="filter-select">
+                    <option value="20">20件</option>
+                    <option value="50">50件</option>
+                    <option value="100">100件</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <!-- 統計情報がここに表示されます -->
+        </div>
+    </div>
+
+    <div id="results" class="results" style="display: none;">
+        <div class="results-header">
+            <h3 id="resultsTitle">検索結果</h3>
+        </div>
+        <div id="resultsContent">
+            <!-- 検索結果がここに表示されます -->
+        </div>
+    </div>
+
+    <script>
+        let currentQuery = '';
+        
+        // 統計情報を読み込み
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                if (stats.total_count > 0) {
+                    const statsDiv = document.getElementById('stats');
+                    let statsHTML = `
+                        <div class="stat-item">
+                            <span>📊</span>
+                            <span>総数: ${stats.total_count}件</span>
+                        </div>
+                    `;
+                    
+                    if (stats.platforms.chatwork) {
+                        statsHTML += `
+                            <div class="stat-item">
+                                <span>💬</span>
+                                <span>Chatwork: ${stats.platforms.chatwork}件</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (stats.platforms.notion) {
+                        statsHTML += `
+                            <div class="stat-item">
+                                <span>📄</span>
+                                <span>Notion: ${stats.platforms.notion}件</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (stats.latest_update) {
+                        const updateDate = new Date(stats.latest_update).toLocaleString('ja-JP');
+                        statsHTML += `
+                            <div class="stat-item">
+                                <span>🕒</span>
+                                <span>最終更新: ${updateDate}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    statsDiv.innerHTML = statsHTML;
+                    statsDiv.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('統計情報の読み込みエラー:', error);
+            }
+        }
+        
+        // 検索実行
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                alert('検索キーワードを入力してください');
+                return;
+            }
+            
+            currentQuery = query;
+            const platform = document.getElementById('platformFilter').value;
+            const limit = document.getElementById('limitFilter').value;
+            
+            // 検索中表示
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            const resultsTitle = document.getElementById('resultsTitle');
+            
+            resultsDiv.style.display = 'block';
+            resultsTitle.textContent = `"${query}" の検索中...`;
+            resultsContent.innerHTML = '<div class="loading">🔄 検索中...</div>';
+            
+            try {
+                // API呼び出し
+                let url = `/api/search?q=${encodeURIComponent(query)}&limit=${limit}`;
+                if (platform) {
+                    url += `&platform=${platform}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || '検索エラー');
+                }
+                
+                // 結果表示
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('検索エラー:', error);
+                resultsTitle.textContent = '検索エラー';
+                resultsContent.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+            }
+        }
+        
+        // 検索結果表示
+        function displayResults(data) {
+            const resultsTitle = document.getElementById('resultsTitle');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            resultsTitle.textContent = `"${currentQuery}" の検索結果 (${data.total_results}件)`;
+            
+            if (data.total_results === 0) {
+                resultsContent.innerHTML = '<div class="no-results">🤷‍♂️ 検索結果が見つかりませんでした</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            data.messages.forEach(message => {
+                const platformClass = `platform-${message.platform}`;
+                const platformName = message.platform === 'chatwork' ? '💬 Chatwork' : '📄 Notion';
+                const date = new Date(message.timestamp).toLocaleString('ja-JP');
+                
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <div class="result-meta">
+                                <span class="platform-badge ${platformClass}">${platformName}</span>
+                                <span>👤 ${message.author}</span>
+                                <span>📁 ${message.channel}</span>
+                                <span>🕒 ${date}</span>
+                            </div>
+                        </div>
+                        <div class="result-content">${highlightQuery(message.content, currentQuery)}</div>
+                        ${message.url ? `<a href="${message.url}" target="_blank" class="result-link">🔗 元の投稿を開く</a>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsContent.innerHTML = html;
+        }
+        
+        // 検索クエリをハイライト
+        function highlightQuery(content, query) {
+            if (!query) return content;
+            
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return content.replace(regex, '<mark>$1</mark>');
+        }
+        
+        // Enterキーで検索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+        });
+    </script>
+</body>
+</html>
